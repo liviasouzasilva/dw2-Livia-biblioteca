@@ -1,18 +1,22 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from .models import Livro
-from .database import SessionLocal
+from models import Livro, LivroCreate, LivroResponse
+from database import SessionLocal, engine
 from datetime import datetime
 import pytz
+
+# Criar as tabelas
+import models
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 # Configuração CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "null"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -36,17 +40,38 @@ def read_livro(livro_id: int, db: SessionLocal = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Livro não encontrado")
     return livro
 
-@app.post("/livros")
-def create_livro(livro: Livro, db: SessionLocal = Depends(get_db)):
-    db_livro = Livro(**livro.dict())
-    db.add(db_livro)
+@app.post("/livros", response_model=LivroResponse)
+def create_livro(livro: LivroCreate, db: SessionLocal = Depends(get_db)):
+    print(f"Recebendo requisição para criar livro: {livro}")
     try:
-        db.commit()
-        db.refresh(db_livro)
-        return db_livro
+        db_livro = Livro(
+            titulo=livro.titulo,
+            autor=livro.autor,
+            ano=livro.ano,
+            genero=livro.genero,
+            isbn=livro.isbn,
+            status=livro.status
+        )
+        print(f"Criando objeto do livro: {db_livro}")
+        db.add(db_livro)
+        try:
+            db.commit()
+            db.refresh(db_livro)
+            print(f"Livro criado com sucesso: {db_livro}")
+            return db_livro
+        except Exception as e:
+            db.rollback()
+            print(f"Erro ao salvar no banco: {str(e)}")
+            import traceback
+            print("Traceback completo:")
+            traceback.print_exc()
+            raise HTTPException(status_code=400, detail=f"Erro ao salvar no banco: {str(e)}")
     except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"Erro ao processar dados: {str(e)}")
+        import traceback
+        print("Traceback completo:")
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=f"Erro ao processar dados: {str(e)}")
 
 @app.put("/livros/{livro_id}")
 def update_livro(livro_id: int, livro: Livro, db: SessionLocal = Depends(get_db)):

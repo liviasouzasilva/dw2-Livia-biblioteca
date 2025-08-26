@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bem-vindo à Biblioteca</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="welcome-styles.css">
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="login-box">
+            <h1>Biblioteca Escolar</h1>
+            <p class="subtitle">Seu espaço literário digital</p>
+            
+            <form id="login-form" class="login-form">
+                <div class="form-group">
+                    <label for="nome">Seu nome</label>
+                    <input type="text" id="nome" required placeholder="Digite seu nome">
+                </div>
+                <button type="submit" class="enter-button">Entrar na Biblioteca</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const nome = document.getElementById('nome').value;
+            localStorage.setItem('userName', nome);
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

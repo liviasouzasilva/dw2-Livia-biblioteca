@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Escolar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1>Biblioteca Escolar</h1>
+        <div class="search-bar">
+            <input type="search" id="search" aria-label="Buscar livros" placeholder="Buscar por título ou autor...">
+        </div>
+    </header>
+
+    <div class="container">
+        <aside class="sidebar">
+            <h2>Filtros</h2>
+            <div class="filter-section">
+                <h3>Gênero</h3>
+                <select id="genero-filter" aria-label="Filtrar por gênero">
+                    <option value="">Todos</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Ficção Científica">Ficção Científica</option>
+                    <option value="Fantasia">Fantasia</option>
+                    <option value="Terror">Terror</option>
+                    <option value="Suspense">Suspense</option>
+                    <option value="Biografia">Biografia</option>
+                    <option value="História">História</option>
+                    <option value="Filosofia">Filosofia</option>
+                    <option value="Autoajuda">Autoajuda</option>
+                    <option value="Infantil">Infantil</option>
+                    <option value="Juvenil">Juvenil</option>
+                    <option value="Mangá">Mangá</option>
+                    <option value="HQ">HQ</option>
+                    <option value="Poesia">Poesia</option>
+                    <option value="Teatro">Teatro</option>
+                    <option value="Técnico">Técnico</option>
+                    <option value="Didático">Didático</option>
+                </select>
+            </div>
+            <div class="filter-section">
+                <h3>Ano</h3>
+                <input type="number" id="ano-filter" aria-label="Filtrar por ano" min="1900">
+            </div>
+            <div class="filter-section">
+                <h3>Status</h3>
+                <select id="status-filter" aria-label="Filtrar por status">
+                    <option value="">Todos</option>
+                    <option value="disponível">Disponível</option>
+                    <option value="emprestado">Emprestado</option>
+                </select>
+            </div>
+        </aside>
+
+        <main>
+            <div class="actions">
+                <button id="novo-livro" aria-label="Adicionar novo livro">Novo Livro</button>
+                <button id="exportar" aria-label="Exportar dados">Exportar</button>
+            </div>
+            <div id="livros-grid" class="livros-grid">
+                <!-- Será preenchido via JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Novo Livro -->
+    <dialog id="modal-livro" aria-labelledby="modal-titulo">
+        <h2 id="modal-titulo">Novo Livro</h2>
+        <form id="form-livro">
+            <div class="form-group">
+                <label for="titulo">Título*</label>
+                <input type="text" id="titulo" required minlength="3" maxlength="90">
+            </div>
+            <div class="form-group">
+                <label for="autor">Autor*</label>
+                <input type="text" id="autor" required>
+            </div>
+            <div class="form-group">
+                <label for="ano">Ano*</label>
+                <input type="number" id="ano" required min="1900">
+            </div>
+            <div class="form-group">
+                <label for="genero">Gênero</label>
+                <select id="genero">
+                    <option value="">Selecione...</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Ficção Científica">Ficção Científica</option>
+                    <option value="Fantasia">Fantasia</option>
+                    <option value="Terror">Terror</option>
+                    <option value="Suspense">Suspense</option>
+                    <option value="Biografia">Biografia</option>
+                    <option value="História">História</option>
+                    <option value="Filosofia">Filosofia</option>
+                    <option value="Autoajuda">Autoajuda</option>
+                    <option value="Infantil">Infantil</option>
+                    <option value="Juvenil">Juvenil</option>
+                    <option value="Mangá">Mangá</option>
+                    <option value="HQ">HQ</option>
+                    <option value="Poesia">Poesia</option>
+                    <option value="Teatro">Teatro</option>
+                    <option value="Técnico">Técnico</option>
+                    <option value="Didático">Didático</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="isbn">ISBN</label>
+                <input type="text" id="isbn">
+            </div>
+            <div class="form-group">
+                <label for="status">Status*</label>
+                <select id="status" required>
+                    <option value="disponível">Disponível</option>
+                    <option value="emprestado">Emprestado</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit">Salvar</button>
+                <button type="button" onclick="this.closest('dialog').close()">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
