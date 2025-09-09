@@ -20,5 +20,5 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 # Importar modelos e criar tabelas
-from .models import Livro
+from models import Livro
 Base.metadata.create_all(bind=engine)

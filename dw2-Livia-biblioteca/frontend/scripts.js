@@ -181,25 +181,44 @@ async function handleFormSubmit(e) {
     submitButton.textContent = 'Salvando...';
     submitButton.disabled = true;
     
+    const anoValue = document.getElementById('ano').value;
     const formData = {
-        titulo: document.getElementById('titulo').value,
-        autor: document.getElementById('autor').value,
-        ano: parseInt(document.getElementById('ano').value),
+        titulo: document.getElementById('titulo').value.trim(),
+        autor: document.getElementById('autor').value.trim(),
+        ano: Number(anoValue) || 0,
         genero: document.getElementById('genero').value,
-        isbn: document.getElementById('isbn').value,
+        isbn: document.getElementById('isbn').value.trim(),
         status: document.getElementById('status').value
     };
 
-    // Validação do ano
+    // Validação básica
     const anoAtual = new Date().getFullYear();
-    if (formData.ano < 1900 || formData.ano > anoAtual) {
-        alert(`O ano deve estar entre 1900 e ${anoAtual}`);
+    if (!formData.titulo || formData.titulo.length < 3) {
+        showMessage('Título inválido (mínimo 3 caracteres)', 'error');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
+        return;
+    }
+
+    if (!formData.autor) {
+        showMessage('Autor é obrigatório', 'error');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
+        return;
+    }
+
+    if (isNaN(formData.ano) || formData.ano < 1900 || formData.ano > anoAtual) {
+        showMessage(`O ano deve estar entre 1900 e ${anoAtual}`, 'error');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
         return;
     }
 
     // Verificar título duplicado
-    if (livros.some(l => l.titulo.toLowerCase() === formData.titulo.toLowerCase())) {
-        alert('Já existe um livro com este título');
+    if (livros.some(l => l.titulo && l.titulo.toLowerCase() === formData.titulo.toLowerCase())) {
+        showMessage('Já existe um livro com este título', 'error');
+        submitButton.textContent = originalButtonText;
+        submitButton.disabled = false;
         return;
     }
 
@@ -243,8 +262,7 @@ async function handleFormSubmit(e) {
         showMessage(`Erro ao salvar livro: ${error.message}`, 'error');
     } finally {
         // Restaurar botão
-        const submitButton = e.target.querySelector('button[type="submit"]');
-        submitButton.textContent = 'Salvar';
+        submitButton.textContent = originalButtonText;
         submitButton.disabled = false;
     }
 }
