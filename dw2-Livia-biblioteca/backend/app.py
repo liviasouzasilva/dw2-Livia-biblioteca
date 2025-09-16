@@ -6,10 +6,30 @@ from models import Livro, LivroCreate, LivroResponse
 from database import SessionLocal, engine
 from datetime import datetime
 import pytz
+import sqlite3
+from database import DB_PATH
 
 # Criar as tabelas
 import models
 models.Base.metadata.create_all(bind=engine)
+
+# Garantir que a coluna 'capa' exista na tabela (migração simples para bancos SQLite existentes)
+try:
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    try:
+        cur.execute("ALTER TABLE livros ADD COLUMN capa TEXT")
+        conn.commit()
+        print("Coluna 'capa' adicionada à tabela 'livros'.")
+    except sqlite3.OperationalError as e:
+        # Se a coluna já existir, sqlite lança OperationalError (duplicate column name)
+        # Ignorar esse erro é seguro para a migração simples.
+        print("Migração: coluna 'capa' possivelmente já existe ou não pôde ser adicionada:", e)
+    finally:
+        cur.close()
+        conn.close()
+except Exception as e:
+    print("Erro ao executar migração simples no banco de dados:", e)
 
 app = FastAPI()
 

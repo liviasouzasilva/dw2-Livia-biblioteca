@@ -1,14 +1,8 @@
 // Configuração inicial
 document.addEventListener('DOMContentLoaded', () => {
-    const userName = localStorage.getItem('userName');
-    if (!userName) {
-        window.location.href = 'welcome.html';
-        return;
-    }
-    
-    // Atualizar o header com o nome do usuário
+    // Mostrar cabeçalho genérico sem nome de usuário
     const header = document.querySelector('header h1');
-    header.textContent = `Bem-vindo(a), ${userName}!`;
+    if (header) header.textContent = 'Bem-vindo!';
     
     initializeApp();
 });
@@ -82,16 +76,38 @@ function setupKeyboardShortcuts() {
     });
 }
 
-// Carregar livros da API
+// Resilient fetch: tenta API_URL e localhost como fallback e aceita endpoint completo ou caminho
+async function apiFetch(endpointOrPath, options = {}) {
+    const isFullUrl = typeof endpointOrPath === 'string' && endpointOrPath.startsWith('http');
+    const candidates = isFullUrl ? [endpointOrPath] : [`${API_URL}${endpointOrPath}`, `http://localhost:8000${endpointOrPath}`];
+    let lastError = null;
+    for (const url of candidates) {
+        try {
+            const res = await fetch(url, options);
+            return res; // retorna mesmo que seja status >= 400; chamador decide
+        } catch (err) {
+            console.warn(`apiFetch: falha ao acessar ${url}:`, err);
+            lastError = err;
+            // tentar próxima URL
+        }
+    }
+    throw lastError || new Error('Erro de rede desconhecido');
+}
+
+// Carregar livros da API (usa apiFetch)
 async function loadLivros() {
     try {
-        const response = await fetch(`${API_URL}/livros`);
-        if (!response.ok) throw new Error('Erro ao carregar livros');
+        const response = await apiFetch('/livros');
+        if (!response) throw new Error('Sem resposta do servidor');
+        if (!response.ok) {
+            const text = await response.text().catch(() => null);
+            throw new Error(text || `Erro ao carregar livros: ${response.status} ${response.statusText}`);
+        }
         livros = await response.json();
         displayLivros(livros);
     } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao carregar livros');
+        console.error('Erro ao carregar livros:', error);
+        alert('Erro ao carregar livros. Verifique se o backend está rodando em http://127.0.0.1:8000 ou http://localhost:8000 e que o CORS está configurado. Detalhe: ' + (error.message || error));
     }
 }
 
@@ -100,62 +116,67 @@ function displayLivros(livrosToDisplay) {
     const grid = document.getElementById('livros-grid');
     grid.innerHTML = '';
 
-    // Agrupar livros em prateleiras de 5
-    const livrosPorPrateleira = 5;
     const livrosSliced = livrosToDisplay.slice(0, currentPage * ITEMS_PER_PAGE);
-    
-    for (let i = 0; i < livrosSliced.length; i += livrosPorPrateleira) {
-        const prateleira = document.createElement('div');
-        prateleira.className = 'prateleira';
-        grid.appendChild(prateleira);
 
-        const livrosDaPrateleira = livrosSliced.slice(i, i + livrosPorPrateleira);
-        const livrosContainer = document.createElement('div');
-        livrosContainer.style.display = 'grid';
-        livrosContainer.style.gridTemplateColumns = `repeat(${livrosPorPrateleira}, 1fr)`;
-        livrosContainer.style.gap = '2rem';
-        livrosContainer.style.marginBottom = '3rem';
-
-        livrosDaPrateleira.forEach(livro => {
-            const card = createLivroCard(livro);
-            livrosContainer.appendChild(card);
-        });
-
-        grid.appendChild(livrosContainer);
-    }
+    livrosSliced.forEach(livro => {
+        const card = createLivroCard(livro);
+        grid.appendChild(card);
+    });
 }
 
-// Criar card de livro
+// Criar card de livro (novo layout conforme especificado)
 function createLivroCard(livro) {
     const card = document.createElement('div');
     card.className = 'livro-card';
-    card.style.backgroundColor = getRandomBookColor();
-    
-    // Informações básicas do livro
-    const basicInfo = document.createElement('div');
-    basicInfo.className = 'livro-info';
-    basicInfo.innerHTML = `
+
+    // Wrapper da capa com proporção 3:4
+    const coverWrapper = document.createElement('div');
+    coverWrapper.className = 'cover-wrapper';
+
+    if (livro.capa) {
+        const img = document.createElement('img');
+        img.src = livro.capa;
+        img.alt = `Capa de ${livro.titulo}`;
+        coverWrapper.appendChild(img);
+    } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'no-capa-placeholder';
+        placeholder.textContent = 'Sem capa';
+        coverWrapper.appendChild(placeholder);
+    }
+
+    // Badge de status no canto superior direito da capa
+    const badge = document.createElement('div');
+    badge.className = 'status-badge ' + (livro.status === 'disponível' ? 'status-available' : 'status-borrowed');
+    badge.textContent = livro.status;
+    coverWrapper.appendChild(badge);
+
+    card.appendChild(coverWrapper);
+
+    // Corpo do card com título e autor
+    const body = document.createElement('div');
+    body.className = 'livro-body';
+    body.innerHTML = `
         <h3>${livro.titulo}</h3>
-        <p class="autor">${livro.autor}</p>
+        <p class="autor">${livro.autor || 'Autor não informado'}</p>
     `;
-    card.appendChild(basicInfo);
-    
-    // Detalhes expandidos (visíveis no hover)
+    card.appendChild(body);
+
+    // Detalhes expandidos (overlay) com ações
     const details = document.createElement('div');
     details.className = 'livro-details';
     details.innerHTML = `
         <p>Ano: ${livro.ano}</p>
         <p>Gênero: ${livro.genero || 'Não especificado'}</p>
         <p class="status-${livro.status}">${livro.status}</p>
-        ${livro.status === 'emprestado' ? 
-            `<p>Emprestado em: ${new Date(livro.data_emprestimo).toLocaleDateString()}</p>` : ''}
+        ${livro.status === 'emprestado' && livro.data_emprestimo ? `<p>Emprestado em: ${new Date(livro.data_emprestimo).toLocaleDateString()}</p>` : ''}
         <button onclick="handleEmprestimoDevolucao(${livro.id})" 
                 aria-label="${livro.status === 'disponível' ? 'Emprestar' : 'Devolver'} ${livro.titulo}">
             ${livro.status === 'disponível' ? 'Emprestar' : 'Devolver'}
         </button>
     `;
     card.appendChild(details);
-    
+
     return card;
 }
 
@@ -263,7 +284,8 @@ async function handleFormSubmit(e) {
         
         console.log('Opções da requisição:', requestOptions);
         
-        const response = await fetch(`${API_URL}/livros`, requestOptions);
+        // usar apiFetch para maior resiliência
+        const response = await apiFetch('/livros', requestOptions);
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => null);
@@ -319,15 +341,16 @@ async function handleEmprestimoDevolucao(livroId) {
     if (!livro) return;
 
     try {
-        const endpoint = `${API_URL}/livros/${livroId}/${livro.status === 'disponível' ? 'emprestar' : 'devolver'}`;
-        const response = await fetch(endpoint, { method: 'POST' });
+        const action = livro.status === 'disponível' ? 'emprestar' : 'devolver';
+        const path = `/livros/${livroId}/${action}`;
+        const response = await apiFetch(path, { method: 'POST' });
         
-        if (!response.ok) throw new Error('Erro na operação');
+        if (!response.ok) throw new Error(`Erro na operação: ${response.status}`);
         
         await loadLivros();
     } catch (error) {
         console.error('Erro:', error);
-        alert('Erro ao processar operação');
+        alert('Erro ao processar operação: ' + (error.message || error));
     }
 }
 
