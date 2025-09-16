@@ -1,18 +1,59 @@
 :root {
     --primary: #1E3A8A;
-    --primary-light: #2563eb;
-    --primary-600: #1e40af;
-    --secondary: #F59E0B;
-    --secondary-light: #fbbf24;
-    --accent: #10B981;
-    --accent-light: #34d399;
-    --background: #F8FAFC;
-    --background-dark: #e2e8f0;
+    --accent: #F59E0B;  /* âmbar */
+    --success: #10B981; /* verde */
+    --bg: #F8FAFC; /* fundo muito claro */
     --text: #0F172A;
-    --text-light: #475569;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --muted: #475569;
 }
 
+/* Sidebar específico */
+.sidebar{background:var(--bg);padding:1.25rem;border-radius:16px;border:1px solid rgba(15,23,42,0.04)}
+.sidebar h2{color:var(--primary);font-weight:700;margin-bottom:1rem}
+.filter-section h3{color:var(--primary);font-weight:600;margin-bottom:.5rem}
+.filter-section select, .filter-section input{
+  appearance:none;padding:.6rem .75rem;border-radius:12px;border:1px solid #e6eef8;background:white;color:var(--text);
+}
+.filter-section select{border:2px solid rgba(245,158,11,0.12)}
+.filter-section select:focus, .filter-section input:focus{outline:none;box-shadow:0 6px 18px rgba(245,158,11,0.12);border-color:var(--accent)}
+
+/* Cards */
+.livro-card{background:white;border-radius:24px;padding:0;overflow:hidden;box-shadow:0 10px 24px rgba(2,6,23,0.06);transition:box-shadow .18s,transform .18s}
+.livro-card:hover{box-shadow:0 20px 40px rgba(2,6,23,0.08);transform:translateY(-6px)}
+.livro-cover{width:100%;height:180px;object-fit:cover;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.livro-info{padding:1rem}
+.livro-info h3{color:var(--primary);margin:0 0 .25rem;font-size:1.05rem}
+.livro-info .autor{color:var(--muted);font-size:.95rem;margin-bottom:.5rem}
+
+/* Badges de status */
+.badge.disponivel{background:rgba(16,185,129,0.12);color:var(--success);padding:.25rem .5rem;border-radius:999px;font-weight:700}
+.badge.emprestado{background:rgba(239,68,68,0.12);color:#ef4444;padding:.25rem .5rem;border-radius:999px;font-weight:700}
+
+/* Botões */
+.btn-primary{background:var(--accent);color:#fff;border-radius:12px;padding:.5rem .9rem;border:none;display:inline-flex;align-items:center;gap:.5rem}
+.btn-primary:hover{background:#d98700;transform:translateY(-2px)}
+.btn-secondary{background:white;color:var(--primary);border:2px solid var(--primary);border-radius:12px;padding:.45rem .85rem}
+
+.action-buttons{display:flex;gap:.5rem}
+.action-buttons button{padding:.5rem .6rem;border-radius:10px;border:none;cursor:pointer}
+.action-buttons .emprestar{background:var(--accent);color:white}
+.action-buttons .devolver{background:#ef4444;color:white}
+.action-buttons button:hover{filter:brightness(.95)}
+
+/* Modal */
+dialog#modal-livro{border-radius:20px;padding:0;overflow:hidden}
+dialog#modal-livro .modal-header{background:var(--primary);color:white;padding:1rem 1.25rem}
+dialog#modal-livro .modal-body{padding:1rem 1.25rem;background:white}
+dialog#modal-livro input, dialog#modal-livro select{width:100%;padding:.6rem;border-radius:10px;border:1px solid #e6eef8}
+dialog#modal-livro input:focus{box-shadow:0 6px 18px rgba(245,158,11,0.12);border-color:var(--accent)}
+.dialog-actions{display:flex;justify-content:flex-end;gap:.75rem;padding:1rem}
+.dialog-actions .confirm{background:var(--success);color:white;padding:.6rem 1rem;border-radius:12px}
+.dialog-actions .cancel{background:#f3f4f6;color:var(--text);padding:.6rem 1rem;border-radius:12px}
+
+/* small utilities */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Global Styles */
 * {
     margin: 0;
     padding: 0;

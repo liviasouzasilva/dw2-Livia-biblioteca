@@ -35,7 +35,7 @@
         <aside class="sidebar">
             <h2>Filtros</h2>
             <div class="filter-section">
-                <h3>Gênero</h3>
+                <h3>📚 Gênero</h3>
                 <select id="genero-filter" aria-label="Filtrar por gênero">
                     <option value="">Todos</option>
                     <option value="Romance">Romance</option>
@@ -58,11 +58,11 @@
                 </select>
             </div>
             <div class="filter-section">
-                <h3>Ano</h3>
+                <h3>📅 Ano</h3>
                 <input type="number" id="ano-filter" aria-label="Filtrar por ano" min="1900">
             </div>
             <div class="filter-section">
-                <h3>Status</h3>
+                <h3>🔖 Status</h3>
                 <select id="status-filter" aria-label="Filtrar por status">
                     <option value="">Todos</option>
                     <option value="disponível">Disponível</option>
@@ -73,8 +73,8 @@
 
         <main>
             <div class="actions">
-                <button id="novo-livro" aria-label="Adicionar novo livro">Novo Livro</button>
-                <button id="exportar" aria-label="Exportar dados">Exportar</button>
+                <button id="novo-livro" class="btn-primary" aria-label="Adicionar novo livro">➕ Novo Livro</button>
+                <button id="exportar" class="btn-secondary" aria-label="Exportar dados">📤 Exportar</button>
             </div>
             <div id="livros-grid" class="livros-grid">
                 <!-- Será preenchido via JavaScript -->
