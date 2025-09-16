@@ -1,6 +1,7 @@
 :root {
     --primary: #1E3A8A;
     --primary-light: #2563eb;
+    --primary-600: #1e40af;
     --secondary: #F59E0B;
     --secondary-light: #fbbf24;
     --accent: #10B981;
@@ -26,28 +27,24 @@ body {
     line-height: 1.6;
 }
 
-/* Header */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: white;
-    padding: 1.5rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1000;
-    box-shadow: var(--shadow);
+/* Header personalizado */
+.main-header{
+  display:flex;align-items:center;gap:1rem;justify-content:space-between;
+  background:linear-gradient(180deg,var(--primary),var(--primary-600));
+  padding:0.9rem 1.25rem;height:72px;box-shadow:0 6px 12px rgba(0,0,0,0.06);
+  position:fixed;top:0;left:0;right:0;z-index:60;transition:box-shadow .18s ease;
 }
+.main-header:hover{box-shadow:0 12px 24px rgba(0,0,0,0.12)}
+.brand .logo{color:white;font-weight:800;font-size:1.1rem}
 
-.search-bar input {
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    border: none;
-    width: 300px;
-}
+/* Centralizar / alinhar busca */
+.search-bar{flex:1;display:flex;justify-content:center}
+.search-input{display:flex;align-items:center;gap:.5rem;background:white;padding:.25rem .5rem;border-radius:9999px;box-shadow:0 4px 14px rgba(2,6,23,0.08)}
+.search-input input{border:none;padding:.5rem .75rem;border-radius:9999px;width:360px}
+.search-input input:focus{outline:none;box-shadow:0 6px 18px rgba(30,58,138,0.12)}
+.search-btn{border:0;background:transparent;padding:.25rem;border-radius:9999px;cursor:pointer}
+
+.main-nav{display:flex;gap:1rem;align-items:center}
 
 /* Layout Principal */
 .container {
