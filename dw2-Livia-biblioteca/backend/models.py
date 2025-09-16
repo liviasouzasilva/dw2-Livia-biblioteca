@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Text
 from sqlalchemy.orm import declarative_base
 from pydantic import BaseModel
 from typing import Optional
@@ -20,6 +20,7 @@ class Livro(Base):
     isbn = Column(String)
     status = Column(String, nullable=False, default="disponível")
     data_emprestimo = Column(DateTime, nullable=True)
+    capa = Column(Text, nullable=True)
 
 # Pydantic models para a API
 class LivroCreate(BaseModel):
@@ -29,6 +30,7 @@ class LivroCreate(BaseModel):
     genero: Optional[str] = None
     isbn: Optional[str] = None
     status: str = "disponível"
+    capa: Optional[str] = None
 
 class LivroResponse(LivroCreate):
     id: int

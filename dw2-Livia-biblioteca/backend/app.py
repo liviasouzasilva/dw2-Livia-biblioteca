@@ -52,7 +52,8 @@ def create_livro(livro: LivroCreate, db: Session = Depends(get_db)):
             ano=livro.ano,
             genero=livro.genero,
             isbn=livro.isbn,
-            status=livro.status
+            status=livro.status,
+            capa=getattr(livro, 'capa', None)
         )
         print(f"Criando objeto do livro: {db_livro}")
         db.add(db_livro)

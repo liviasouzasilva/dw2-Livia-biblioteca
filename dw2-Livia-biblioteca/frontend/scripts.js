@@ -171,6 +171,20 @@ function getRandomBookColor() {
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
+// Preview de capa
+const inputCapa = document.getElementById('capa');
+if(inputCapa){
+    inputCapa.addEventListener('change', function(){
+        const file = this.files[0];
+        const preview = document.getElementById('preview-capa');
+        const img = document.getElementById('preview-img');
+        if(!file){ preview.style.display='none'; img.src=''; return; }
+        const reader = new FileReader();
+        reader.onload = function(e){ img.src = e.target.result; preview.style.display='block'; }
+        reader.readAsDataURL(file);
+    });
+}
+
 // Manipular envio do formulário
 async function handleFormSubmit(e) {
     e.preventDefault();
@@ -182,13 +196,25 @@ async function handleFormSubmit(e) {
     submitButton.disabled = true;
     
     const anoValue = document.getElementById('ano').value;
+    const file = document.getElementById('capa')?.files[0];
+    let capaBase64 = null;
+    if(file){
+        capaBase64 = await new Promise((res, rej)=>{
+            const r = new FileReader();
+            r.onload = ()=> res(r.result);
+            r.onerror = ()=> rej(new Error('Erro ao ler imagem'));
+            r.readAsDataURL(file);
+        });
+    }
+
     const formData = {
         titulo: document.getElementById('titulo').value.trim(),
         autor: document.getElementById('autor').value.trim(),
         ano: Number(anoValue) || 0,
         genero: document.getElementById('genero').value,
         isbn: document.getElementById('isbn').value.trim(),
-        status: document.getElementById('status').value
+        status: document.getElementById('status').value,
+        capa: capaBase64
     };
 
     // Validação básica
