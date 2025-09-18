@@ -33,12 +33,12 @@ except Exception as e:
 
 app = FastAPI()
 
-# Configuração CORS
+# Configuração CORS (modo desenvolvimento: permitir todas origens/metodos para evitar bloqueios do frontend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500", "null"],
+    allow_origins=["*"],  # permitir todas as origens em desenvolvimento
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["*"],  # permitir todos os métodos (GET, POST, PUT, DELETE, OPTIONS...)
     allow_headers=["*"],
 )
 

@@ -5,11 +5,11 @@
     --secondary-light: #fbbf24;
     --accent: #10B981;
     --accent-light: #34d399;
-    --background: #F8FAFC;
-    --background-dark: #e2e8f0;
+    --background: #EFF6FF; /* slightly stronger, more blue */
+    --background-dark: #dbeafe;
     --text: #0F172A;
     --text-light: #475569;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow: 0 6px 18px -2px rgba(0, 0, 0, 0.12), 0 3px 6px -2px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -21,8 +21,8 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    /* leve ajuste do degradê para cores claras da paleta */
-    background: linear-gradient(180deg, #f5f8ff 0%, #f8fbfb 60%);
+    /* degradê um pouco mais forte e azulado */
+    background: linear-gradient(180deg, #ecf5ff 0%, #f3f9ff 60%);
     color: var(--text);
     line-height: 1.6;
 }
@@ -33,20 +33,20 @@ header {
     top: 0;
     left: 0;
     right: 0;
-    padding: 1.25rem 2.5rem;
-    min-height: 76px;
-    background: linear-gradient(90deg, rgba(30,58,138,1) 0%, rgba(37,99,235,0.95) 100%);
+    padding: 1.75rem 3rem; /* maior espaçamento */
+    min-height: 96px; /* cabeçalho maior */
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%); /* degradê mais forte */
     color: white;
     display: flex;
     align-items: center;
     z-index: 1000;
-    box-shadow: 0 10px 30px rgba(2,6,23,0.12);
+    box-shadow: 0 14px 40px rgba(2,6,23,0.16); /* sombra mais pronunciada */
 }
 
 header h1 {
     position: absolute;
     left: 1.75rem;
-    font-size: 1.35rem;
+    font-size: 1.6rem; /* maior título */
     font-weight: 700;
 }
 
@@ -54,13 +54,13 @@ header h1 {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: 54%;
-    max-width: 820px;
+    width: 60%; /* um pouco maior */
+    max-width: 920px;
 }
 
 .search-bar input {
     width: 100%;
-    padding: 0.8rem 1.25rem;
+    padding: 1rem 1.5rem; /* input maior para combinar com cabeçalho */
     border-radius: 999px;
     border: none;
     font-size: 1rem;
@@ -169,7 +169,7 @@ header h1 {
 /* Grid de Livros: tamanho maior para capas (estilo Kindle) */
 .livros-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(240px, 1fr)); /* maior min-width */
+    grid-template-columns: repeat(4, minmax(220px, 1fr)); /* 4 colunas por linha */
     gap: 2rem;
     padding: 2rem;
     justify-items: center; /* centralizar conteúdo do grid */
@@ -178,13 +178,27 @@ header h1 {
 
 /* Forçar células do grid a terem altura fixa para cards uniformes (format retangular) */
 #livros-grid {
+    width: 100%;
+    max-height: calc(100vh - 220px); /* altura fixa relativa à viewport */
+    overflow-y: auto; /* rolagem vertical */
+    overflow-x: hidden; /* impedir rolagem horizontal */
+    padding-right: 1rem; /* espaço para o scrollbar */
+    box-sizing: content-box;
     display: grid;
-    grid-template-columns: repeat(5, minmax(240px, 1fr));
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
     gap: 2rem;
-    padding: 2rem;
-    justify-items: center;
     grid-auto-rows: 360px; /* altura fixa das células do grid */
     align-items: start;
+}
+
+/* Responsivo: tablet e mobile */
+@media (max-width: 1024px) {
+    .livros-grid, #livros-grid { grid-template-columns: repeat(3, minmax(200px, 1fr)); }
+    #livros-grid { grid-auto-rows: 320px; }
+}
+@media (max-width: 640px) {
+    .livros-grid, #livros-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+    #livros-grid { grid-auto-rows: 300px; }
 }
 
 /* Cada card ocupa toda a célula e tem largura 100% para ficar retangular */
@@ -221,6 +235,24 @@ header h1 {
     transition: transform 0.45s cubic-bezier(.2,.8,.2,1);
 }
 
+/* Status badge on cover */
+.status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 0.3rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    z-index: 5;
+}
+
+.status-available { background: linear-gradient(90deg, #10B981, #34D399); }
+.status-borrowed { background: linear-gradient(90deg, #F97316, #FB923C); }
+
 /* Corpo do card ocupa o restante e não altera a altura total do card */
 .livro-body {
     flex: 1 1 40%;
@@ -239,6 +271,7 @@ header h1 {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 0.2rem;
 }
 
 .livro-body h3 {
@@ -309,16 +342,20 @@ header h1 {
 }
 
 /* Modal */
+/* Dialog base: hidden unless open */
 dialog {
+    display: none;
     border: none;
     border-radius: 16px;
     padding: 2.5rem;
+}
+
+dialog[open] {
     display: grid;
     grid-template-columns: 1fr;
 }
 
 dialog header {
-    display: flex;
     flex-direction: column;
     gap: 1rem;
 }
@@ -335,13 +372,13 @@ main {
 
 #livros-grid {
     width: 100%;
-    max-height: calc(100vh - 200px); /* altura fixa relativa à viewport */
+    max-height: calc(100vh - 220px); /* altura fixa relativa à viewport */
     overflow-y: auto; /* rolagem vertical */
     overflow-x: hidden; /* impedir rolagem horizontal */
     padding-right: 1rem; /* espaço para o scrollbar */
     box-sizing: content-box;
     display: grid;
-    grid-template-columns: repeat(5, minmax(240px, 1fr));
+    grid-template-columns: repeat(4, minmax(220px, 1fr));
     gap: 2rem;
     grid-auto-rows: 360px; /* altura fixa das células do grid */
     align-items: start;
@@ -377,4 +414,108 @@ main {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Modal aprimorado: centralizado, com backdrop e visual harmonioso */
+dialog#modal-livro {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 720px;
+    max-width: calc(100% - 48px);
+    max-height: 80vh;
+    overflow-y: auto;
+    border: none;
+    border-radius: 14px;
+    padding: 1.5rem 1.75rem;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), #fbfdff);
+    box-shadow: 0 20px 50px rgba(2,6,23,0.18);
+    z-index: 2000;
+}
+
+/* Sombreamento do backdrop para focar o modal */
+dialog#modal-livro::backdrop {
+    background: rgba(2,6,23,0.45);
+}
+
+/* Cabeçalho do modal */
+dialog#modal-livro h2#modal-titulo {
+    margin: 0 0 0.6rem 0;
+    color: var(--primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* Formulário dentro do modal */
+#form-livro {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.85rem 1rem;
+    align-items: start;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+    font-size: 0.95rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select,
+.form-group input[type="file"] {
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(15,23,42,0.08);
+    background: #ffffff;
+    font-size: 0.95rem;
+}
+
+/* Input de arquivo ocupa toda a largura na coluna inteira */
+.form-group input[type="file"] { padding: 0.4rem; }
+
+/* Preview ocupa largura total quando presente */
+#preview-capa { display: none; grid-column: 1 / -1; }
+#preview-capa img { width: 100%; border-radius: 8px; display: block; }
+
+/* Status e botões ocupam coluna única na mesma linha */
+.form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.form-actions button {
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+.form-actions button[type="submit"] {
+    background: linear-gradient(90deg, var(--primary), var(--primary-light));
+    color: white;
+    box-shadow: 0 8px 20px rgba(30,58,138,0.12);
+}
+
+.form-actions button[type="button"] {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid rgba(15,23,42,0.06);
+}
+
+/* Ajustes responsivos para telas pequenas */
+@media (max-width: 720px) {
+    #form-livro { grid-template-columns: 1fr; }
+    dialog#modal-livro { width: calc(100% - 32px); padding: 1rem; }
 }

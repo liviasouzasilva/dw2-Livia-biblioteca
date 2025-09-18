@@ -12,6 +12,20 @@ let livros = [];
 const API_URL = 'http://127.0.0.1:8000';  // Usando 127.0.0.1 ao invés de localhost
 const ITEMS_PER_PAGE = 10;
 let currentPage = 1;
+let lastRenderedCount = 0;
+
+// Default SVG cover (used when livro.capa is not provided)
+const DEFAULT_SVG = `
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 800'>
+  <rect width='600' height='800' fill='#eef2ff'/>
+  <g fill='#c7d2fe'>
+    <rect x='60' y='120' width='480' height='40' rx='6' />
+    <rect x='60' y='180' width='380' height='22' rx='4' />
+    <rect x='120' y='260' width='360' height='420' rx='8' fill='#ffffff' />
+  </g>
+  <text x='50%' y='58%' font-size='28' text-anchor='middle' fill='#93a5c6' font-family='Arial, Helvetica, sans-serif'>Sem capa</text>
+</svg>`;
+const DEFAULT_COVER = 'data:image/svg+xml;utf8,' + encodeURIComponent(DEFAULT_SVG);
 
 // Função para mostrar mensagens de feedback
 function showMessage(message, type = 'info') {
@@ -37,6 +51,7 @@ function showMessage(message, type = 'info') {
 // Inicialização do aplicativo
 async function initializeApp() {
     setupEventListeners();
+    // carregar livros mas não abrir modal automaticamente
     await loadLivros();
     setupKeyboardShortcuts();
     loadSortPreference();
@@ -46,25 +61,57 @@ async function initializeApp() {
 function setupEventListeners() {
     // Modal novo livro
     const btnNovoLivro = document.getElementById('novo-livro');
-    btnNovoLivro.addEventListener('click', () => {
-        document.getElementById('modal-livro').showModal();
-    });
+    if (btnNovoLivro) {
+        btnNovoLivro.addEventListener('click', () => {
+            const dlg = document.getElementById('modal-livro');
+            if (dlg) dlg.showModal();
+        });
+    }
 
     // Formulário de livro
     const formLivro = document.getElementById('form-livro');
-    formLivro.addEventListener('submit', handleFormSubmit);
+    if (formLivro) formLivro.addEventListener('submit', handleFormSubmit);
+
+    // Cancelar do modal: fechar e voltar para a top da página
+    const cancelButtons = document.querySelectorAll('#modal-livro button[type="button"]');
+    cancelButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const dlg = e.target.closest('dialog');
+            if (dlg) dlg.close();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const preview = document.getElementById('preview-capa');
+            const img = document.getElementById('preview-img');
+            if (preview) { preview.style.display = 'none'; }
+            if (img) { img.src = ''; }
+        });
+    });
 
     // Filtros
-    document.getElementById('search').addEventListener('input', filterLivros);
-    document.getElementById('genero-filter').addEventListener('change', filterLivros);
-    document.getElementById('ano-filter').addEventListener('input', filterLivros);
-    document.getElementById('status-filter').addEventListener('change', filterLivros);
+    const searchEl = document.getElementById('search');
+    if (searchEl) searchEl.addEventListener('input', filterLivros);
+    const generoEl = document.getElementById('genero-filter');
+    if (generoEl) generoEl.addEventListener('change', filterLivros);
+    const anoEl = document.getElementById('ano-filter');
+    if (anoEl) anoEl.addEventListener('input', filterLivros);
+    const statusEl = document.getElementById('status-filter');
+    if (statusEl) statusEl.addEventListener('change', filterLivros);
 
     // Exportar
-    document.getElementById('exportar').addEventListener('click', exportarDados);
+    const exportBtn = document.getElementById('exportar');
+    if (exportBtn) exportBtn.addEventListener('click', exportarDados);
 
-    // Scroll infinito
-    window.addEventListener('scroll', handleInfiniteScroll);
+    // Scroll infinito: attach to grid container (vertical only)
+    const grid = document.getElementById('livros-grid');
+    if (grid) {
+        grid.addEventListener('scroll', handleGridScroll);
+        // ensure grid has focusable behavior for scroll
+        grid.style.overflowY = 'auto';
+        grid.style.overflowX = 'hidden';
+    }
+
+    // Scroll infinito antigo removido (não usar window scroll)
+    // window.addEventListener('scroll', handleInfiniteScroll);
 }
 
 // Atalhos de teclado
@@ -111,10 +158,27 @@ async function loadLivros() {
     }
 }
 
-// Exibir livros na interface
+// Atualizar select de edição ao carregar/exibir livros
+function updateEditarSelect() {
+    const select = document.getElementById('editar-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">Selecione um livro...</option>';
+    livros.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l.id;
+        opt.textContent = `${l.titulo} — ${l.autor || 'Autor'}`;
+        select.appendChild(opt);
+    });
+}
+
+// Exibir livros na interface (renderizar inicialmente ou após filtros)
 function displayLivros(livrosToDisplay) {
     const grid = document.getElementById('livros-grid');
     grid.innerHTML = '';
+
+    // reset pagination
+    currentPage = 1;
+    lastRenderedCount = 0;
 
     const livrosSliced = livrosToDisplay.slice(0, currentPage * ITEMS_PER_PAGE);
 
@@ -122,6 +186,35 @@ function displayLivros(livrosToDisplay) {
         const card = createLivroCard(livro);
         grid.appendChild(card);
     });
+
+    lastRenderedCount = grid.children.length;
+}
+
+// Append next page of livros to grid (used by infinite scroll)
+function appendMoreLivros(allLivros) {
+    const grid = document.getElementById('livros-grid');
+    const start = lastRenderedCount;
+    const end = Math.min(allLivros.length, start + ITEMS_PER_PAGE);
+    if (start >= end) return; // nothing to add
+
+    for (let i = start; i < end; i++) {
+        const card = createLivroCard(allLivros[i]);
+        grid.appendChild(card);
+    }
+    lastRenderedCount = grid.children.length;
+}
+
+// Scroll handler para o container #livros-grid
+function handleGridScroll(e) {
+    const grid = e.target;
+    if (!grid) return;
+    const { scrollTop, scrollHeight, clientHeight } = grid;
+    // quando atingir próximo do final, carregar mais
+    if (scrollTop + clientHeight >= scrollHeight - 80) {
+        // incrementar página lógica (opcional)
+        currentPage++;
+        appendMoreLivros(livros);
+    }
 }
 
 // Criar card de livro (novo layout conforme especificado)
@@ -133,22 +226,16 @@ function createLivroCard(livro) {
     const coverWrapper = document.createElement('div');
     coverWrapper.className = 'cover-wrapper';
 
-    if (livro.capa) {
-        const img = document.createElement('img');
-        img.src = livro.capa;
-        img.alt = `Capa de ${livro.titulo}`;
-        coverWrapper.appendChild(img);
-    } else {
-        const placeholder = document.createElement('div');
-        placeholder.className = 'no-capa-placeholder';
-        placeholder.textContent = 'Sem capa';
-        coverWrapper.appendChild(placeholder);
-    }
+    // Always create an img element; use capa if provided, otherwise default cover
+    const img = document.createElement('img');
+    img.alt = `Capa de ${livro.titulo}`;
+    img.src = livro.capa && livro.capa.trim() ? livro.capa : DEFAULT_COVER;
+    coverWrapper.appendChild(img);
 
     // Badge de status no canto superior direito da capa
     const badge = document.createElement('div');
     badge.className = 'status-badge ' + (livro.status === 'disponível' ? 'status-available' : 'status-borrowed');
-    badge.textContent = livro.status;
+    badge.textContent = livro.status && livro.status[0] ? livro.status.charAt(0).toUpperCase() + livro.status.slice(1) : '';
     coverWrapper.appendChild(badge);
 
     card.appendChild(coverWrapper);
@@ -403,16 +490,6 @@ function downloadFile(content, filename, type) {
     window.URL.revokeObjectURL(url);
 }
 
-// Scroll infinito
-function handleInfiniteScroll() {
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-    
-    if (scrollTop + clientHeight >= scrollHeight - 5) {
-        currentPage++;
-        displayLivros(livros);
-    }
-}
-
 // Gerenciamento de ordenação
 function loadSortPreference() {
     const sortPreference = localStorage.getItem('sortPreference');
@@ -434,3 +511,78 @@ function sortLivros(field, direction) {
     localStorage.setItem('sortPreference', `${field}-${direction}`);
     displayLivros(livros);
 }
+
+// Editar e remover selecionado
+function setupEditRemoveHandlers() {
+    const editarBtn = document.getElementById('editar-btn');
+    const removerBtn = document.getElementById('remover-btn');
+    const select = document.getElementById('editar-select');
+
+    if (editarBtn) {
+        editarBtn.addEventListener('click', () => {
+            const id = select.value;
+            if (!id) { showMessage('Selecione um livro para editar', 'error'); return; }
+            const livro = livros.find(l => String(l.id) === String(id));
+            if (!livro) { showMessage('Livro não encontrado', 'error'); return; }
+            // preenche o modal com os dados do livro e abre para editar
+            const dlg = document.getElementById('modal-livro');
+            document.getElementById('titulo').value = livro.titulo || '';
+            document.getElementById('autor').value = livro.autor || '';
+            document.getElementById('ano').value = livro.ano || '';
+            document.getElementById('genero').value = livro.genero || '';
+            document.getElementById('isbn').value = livro.isbn || '';
+            document.getElementById('status').value = livro.status || 'disponível';
+            // manter preview se tiver
+            const preview = document.getElementById('preview-capa');
+            const img = document.getElementById('preview-img');
+            if (livro.capa && img) { img.src = livro.capa; preview.style.display = 'block'; }
+
+            if (dlg) dlg.showModal();
+
+            // Substituir temporariamente o submit handler para fazer PUT em vez de POST
+            const form = document.getElementById('form-livro');
+            form.removeEventListener('submit', handleFormSubmit);
+            form.addEventListener('submit', async function onEditSubmit(e) {
+                e.preventDefault();
+                const formData = {
+                    titulo: document.getElementById('titulo').value.trim(),
+                    autor: document.getElementById('autor').value.trim(),
+                    ano: Number(document.getElementById('ano').value) || 0,
+                    genero: document.getElementById('genero').value,
+                    isbn: document.getElementById('isbn').value.trim(),
+                    status: document.getElementById('status').value,
+                    capa: document.getElementById('preview-img').src || null
+                };
+                try {
+                    const res = await apiFetch(`/livros/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+                    if (!res.ok) throw new Error('Erro ao editar');
+                    await loadLivros();
+                    showMessage('Livro atualizado', 'success');
+                    document.getElementById('modal-livro').close();
+                } catch (err) { showMessage('Erro ao atualizar livro', 'error'); }
+                // restaurar submit
+                form.removeEventListener('submit', onEditSubmit);
+                form.addEventListener('submit', handleFormSubmit);
+            });
+        });
+    }
+
+    if (removerBtn) {
+        removerBtn.addEventListener('click', async () => {
+            const id = select.value;
+            if (!id) { showMessage('Selecione um livro para remover', 'error'); return; }
+            if (!confirm('Tem certeza que deseja remover este livro?')) return;
+            try {
+                const res = await apiFetch(`/livros/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Erro ao remover');
+                await loadLivros();
+                showMessage('Livro removido', 'success');
+            } catch (err) { showMessage('Erro ao remover livro', 'error'); }
+        });
+    }
+}
+
+// Chamar setupEditRemoveHandlers no load
+window.addEventListener('DOMContentLoaded', () => {
+    setupEditRemoveHandlers();
+});
